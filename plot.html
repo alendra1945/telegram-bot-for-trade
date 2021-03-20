@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>plot html</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/danfojs@0.2.4/lib/bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  </head>
+  <body>
+    <div id="close-price" style="margin-bottom: 100px"></div>
+    <div id="RSI" style="margin-bottom: 100px"></div>
+    <script>
+      calculateEMA = (periode, price, EMABefore) => {
+        const a_MA_Periode = 2 / (periode + 1);
+        return a_MA_Periode * price + (1 - a_MA_Periode) * EMABefore;
+      };
+      getDataMAByPeriode = (data, periode) => {
+        const MA_Periode = new Array(data.length);
+        data.forEach((v, i) => {
+          if (i === 0) {
+            MA_Periode[i] = v;
+          } else {
+            MA_Periode[i] = calculateEMA(periode, v, MA_Periode[i - 1]);
+          }
+        });
+        return MA_Periode;
+      };
+
+      calculateRSI = (
+        delta,
+        beforeAveragePositif,
+        beforeAverageNegatif,
+        periode = 14
+      ) => {
+        const valuePositif = delta > 0 ? delta : 0;
+        const valueNegatif = delta < 0 ? Math.abs(delta) : 0;
+        const lastAveragePositif =
+          (beforeAveragePositif * (periode - 1) + valuePositif) / periode;
+        const lastAverageNegatif =
+          (beforeAverageNegatif * (periode - 1) + valueNegatif) / periode;
+        return {
+          lastAveragePositif,
+          lastAverageNegatif,
+          rsi: 100 - 100 / (1 + lastAveragePositif / lastAverageNegatif),
+        };
+      };
+      getDataRSI = (data, periode = 14) => {
+        const delta = new Array(data.length);
+        data.forEach((v, i) => {
+          if (i === 0) {
+            delta[i] = 0;
+          } else {
+            delta[i] = data[i] - data[i - 1];
+          }
+        });
+        const positif = [...delta.map((v) => (v > 0 ? v : 0))];
+        const negatif = [...delta.map((v) => (v < 0 ? Math.abs(v) : 0))];
+        const average_positif = new Array(data.length);
+        const average_negatif = new Array(data.length);
+        const rsi = new Array(data.length);
+        delta.forEach((v, i) => {
+          if (i < periode) {
+            average_positif[i] =
+              positif.slice(0, periode).reduce((sum, v) => sum + v, 0) /
+              periode;
+            average_negatif[i] =
+              negatif.slice(0, periode).reduce((sum, v) => sum + v, 0) /
+              periode;
+            rsi[i] = 100 - 100 / (1 + average_positif[i] / average_negatif[i]);
+          } else {
+            const dataCalculateRSI = calculateRSI(
+              v,
+              average_positif[i - 1],
+              average_negatif[i - 1]
+            );
+            average_positif[i] = dataCalculateRSI.lastAveragePositif;
+            average_negatif[i] = dataCalculateRSI.lastAverageNegatif;
+            rsi[i] = dataCalculateRSI.rsi;
+          }
+        });
+
+        return {
+          lastAveragePositif: average_positif[average_positif.length - 1],
+          LastAverageNegatif: average_negatif[average_negatif.length - 1],
+          rsi,
+        };
+      };
+      (async function () {
+        const startFrom =
+          moment().startOf("day").toDate().getTime() / 1000 -
+          1000 * 24 * 60 * 60;
+        const getDataBTC_IDR = await fetch(
+          `https://indodax.com/tradingview/history?symbol=BTCIDR&resolution=60&from=${startFrom}`
+        );
+        if (getDataBTC_IDR.ok) {
+          const result = await getDataBTC_IDR.json();
+          if (result.s == "ok") {
+            const dataTime = (result.t.length > 200
+              ? result.t.slice(result.t.length - 200)
+              : result.t
+            ).map((v) => moment(v * 1000).format("DD/MM/YY,HH:mm"));
+            const closePrice =
+              result.c.length > 200
+                ? result.c.slice(result.c.length - 200)
+                : result.c;
+            const MA14 = getDataMAByPeriode(closePrice, 14);
+            const MA26 = getDataMAByPeriode(closePrice, 26);
+            const lineClosePrice = {
+              mode: "lines",
+              x: dataTime,
+              y: closePrice,
+              line: { color: "#17BECF" },
+            };
+            const lineMa14 = {
+              mode: "lines",
+              x: dataTime,
+              y: MA14,
+              line: { color: "red" },
+            };
+            const lineMa26 = {
+              mode: "lines",
+              x: dataTime,
+              y: MA26,
+              line: { color: "green" },
+            };
+            var data = [lineClosePrice, lineMa14, lineMa26];
+            var layout = {
+              title: "BTC_IDR",
+            };
+            Plotly.newPlot("close-price", data, layout);
+
+            const RSI = getDataRSI(closePrice).rsi;
+            var layoutRSI = {
+              title: "BTC_IDR",
+            };
+            const lineRSI = {
+              mode: "lines",
+              x: dataTime,
+              y: RSI,
+              line: { color: "green" },
+            };
+            Plotly.newPlot("RSI", [lineRSI], layoutRSI);
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

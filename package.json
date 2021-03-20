@@ -1,0 +1,21 @@
+{
+  "name": "bot-trade-indodax",
+  "version": "1.0.0",
+  "description": "bot trade indodax",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bot",
+    "indodax"
+  ],
+  "author": "alen1945",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "dotenv": "^8.2.0",
+    "moment": "^2.29.1",
+    "node-cron": "^3.0.0"
+  }
+}
