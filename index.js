@@ -1,5 +1,7 @@
 "use strict";
+require("dotenv").config();
 const cron = require("node-cron");
+const { Telegraf } = require("telegraf");
 const {
   getDataClose,
   getDataMAByPeriode,
@@ -8,34 +10,58 @@ const {
   calculateEMA,
   calculateRSI,
 } = require("./src/helper/getData");
-const moment = require("moment");
+
+let saldo = 1500000;
 let dataTime = [];
 let dataClose = [];
 let MA14 = [];
 let MA26 = [];
 let DataRSI = {};
-let onBuy = false;
+let onBuy = {
+  status: false,
+  getCoin: 0,
+};
 
+const bot = new Telegraf(process.env.TELEGRAM_BOT_KEY);
 const calculateSignal = () => {
   const lastIndex = dataClose.length - 1;
   if (
-    !onBuy &&
+    !onBuy.status &&
     MA14[lastIndex] > MA26[lastIndex] &&
     MA14[lastIndex - 1] < MA26[lastIndex - 1] &&
     DataRSI.rsi[lastIndex] > 50
   ) {
-    onBuy = true;
+    buyWith = (10 / 100) * saldo;
+    saldo -= buyWith;
+    onBuy = {
+      status: true,
+      getCoin: buyWith / dataClose[lastIndex],
+    };
     console.log(`Buy on ${dataClose[lastIndex]}`);
+    bot.telegram.sendMessage(
+      process.env.MY_ID,
+      `INFO: Buy on ${dataClose[lastIndex]}`
+    );
   } else if (
-    onBuy &&
+    onBuy.status &&
     MA14[lastIndex] < MA26[lastIndex] &&
     MA14[lastIndex - 1] > MA26[lastIndex - 1] &&
     DataRSI.rsi[lastIndex] < 50
   ) {
-    onBuy = false;
+    sellWith = buyWith.getCoin * dataClose[lastIndex];
+    saldo += sellWith;
+    onBuy = {
+      status: false,
+      getCoin: 0,
+    };
     console.log(`Sell on ${dataClose[lastIndex]}`);
+    bot.telegram.sendMessage(
+      process.env.MY_ID,
+      `INFO: Sell on ${dataClose[lastIndex]}`
+    );
   } else {
     console.log("no trade signal");
+    bot.telegram.sendMessage(process.env.MY_ID, "INFO: no trade signal");
   }
 };
 
@@ -82,3 +108,37 @@ const updateData = async () => {
     cron.schedule("35 1 * * * *", updateData);
   }
 })();
+
+const isMe = (callback) => (ctx) => {
+  if (`${ctx.message.from.id}` === process.env.MY_ID) {
+    callback(ctx);
+  } else {
+    ctx.reply("You Dont Have Permission");
+  }
+};
+bot.start(
+  isMe((ctx) => {
+    ctx.reply("Heloo");
+  })
+);
+bot.command(
+  "balance",
+  isMe((ctx) => {
+    ctx.reply(`Your saldo ${saldo}`);
+  })
+);
+bot.command(
+  "closePrice",
+  isMe((ctx) => {
+    ctx.reply(`ClosePrice on ${dataClose[dataClose.length - 1]}`);
+  })
+);
+bot.command(
+  "updateData",
+  isMe((ctx) => {
+    updateData();
+    console.log(ctx.message);
+    ctx.reply("Woke");
+  })
+);
+bot.launch();
