@@ -63,7 +63,7 @@ const server = http.createServer((req, res) => {
 server.listen(process.env.PORT || 3000, () => {
   console.log("run bot success");
 });
-cron.schedule("* */5 * * * *", () => {
+cron.schedule("0 */5 * * * *", () => {
   axios.get("https://bot-indodax.herokuapp.com/").then((res) => {
     console.log("res", res.data);
   });
