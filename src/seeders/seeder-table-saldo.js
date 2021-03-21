@@ -6,7 +6,7 @@ module.exports = {
       "Saldos",
       [
         {
-          saldoIDR: 150000,
+          saldoIDR: 1500000,
         },
       ],
       {}
