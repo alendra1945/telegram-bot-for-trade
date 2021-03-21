@@ -52,7 +52,7 @@ TradeCrypto.prototype.start = async function () {
     this.longEMA = getDataMAByPeriode(data.dataClose, this.periodeLong);
     this.DataRSI = getDataRSI(data.dataClose, this.periodeRSI);
     this.calculateSignal();
-    cron.schedule("35 0,15,30,45 * * * *", () => this.updateData());
+    cron.schedule("35 0,3,15,30,45 * * * *", () => this.updateData());
     // this.tes();
   }
 };
