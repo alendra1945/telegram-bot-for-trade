@@ -132,7 +132,7 @@ TradeCrypto.prototype.updateData = async function () {
       this.DataRSI = {
         lastAveragePositif: resultCalculteRSI.lastAveragePositif,
         lastAverageNegatif: resultCalculteRSI.lastAverageNegatif,
-        rsi: [...DataRSI.rsi.slice(1), resultCalculteRSI.rsi],
+        rsi: [...this.DataRSI.rsi.slice(1), resultCalculteRSI.rsi],
       };
       this.calculateSignal();
     }
