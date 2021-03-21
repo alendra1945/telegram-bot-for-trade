@@ -47,10 +47,11 @@ TradeCrypto.prototype.start = async function () {
     this.longEMA = getDataMAByPeriode(data.dataClose, this.periodeLong);
     this.DataRSI = getDataRSI(data.dataClose, this.periodeRSI);
     this.calculateSignal();
-    cron.schedule("35 */1 * * * *", this.updateData);
+    cron.schedule("35 0,15,30,45 * * * *", () => this.updateData());
   }
 };
 TradeCrypto.prototype.calculateSignal = function () {
+  console.log(`calculate ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
   if (
     !this.onBuy.status &&
@@ -95,7 +96,7 @@ TradeCrypto.prototype.calculateSignal = function () {
   }
 };
 TradeCrypto.prototype.updateData = async function () {
-  console.log("get update");
+  console.log(`get update ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
   try {
     const newData = await getDataFrom(
