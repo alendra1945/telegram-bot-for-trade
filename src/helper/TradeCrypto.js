@@ -9,31 +9,36 @@ const {
   calculateEMA,
   calculateRSI,
 } = require("./getData");
-
+const moment = require("moment");
 let saldo = 1500000;
 
-function TradeCrypto(
+function TradeCrypto({
   name,
   code = "BTCIDR",
   periodeShort = 14,
   periodeLong = 26,
   periodeRSI = 14,
-  numDays = 100,
-  resolution = "60"
-) {
+  numDays = 1000,
+  resolution = "60",
+  overSold = 58,
+  overBought = 50,
+}) {
   this.name = name;
-  this.code = code;
-  this.periodeShort = periodeShort;
-  this.periodeLong = periodeLong;
-  this.periodeRSI = periodeRSI;
-  this.numDays = numDays;
-  this.resolution = resolution;
+  this.code = code || "BTCIDR";
+  this.periodeShort = periodeShort || 14;
+  this.periodeLong = periodeLong || 26;
+  this.periodeRSI = periodeRSI || 14;
+  this.numDays = numDays || 1000;
+  this.resolution = resolution || "60";
+  this.overSold = overSold || 58;
+  this.overBought = overBought || 50;
   this.dataTime = [];
   this.dataClose = [];
   this.shortEMA = [];
   this.longEMA = [];
   this.DataRSI = {};
-  this.onBuy = {
+  this.buyFlag = false;
+  this.dataBuy = {
     status: false,
     getCoin: 0,
   };
@@ -48,52 +53,129 @@ TradeCrypto.prototype.start = async function () {
     this.DataRSI = getDataRSI(data.dataClose, this.periodeRSI);
     this.calculateSignal();
     cron.schedule("35 0,15,30,45 * * * *", () => this.updateData());
+    // this.tes();
+  }
+};
+TradeCrypto.prototype.applyStrategy = function (
+  shortEMAValue,
+  shortEMABefore,
+  LongEMAValue,
+  LongEMABefore,
+  RSIValue
+) {
+  if (
+    !this.buyFlag &&
+    shortEMAValue > LongEMAValue &&
+    shortEMABefore < LongEMABefore &&
+    RSIValue > this.overSold
+  ) {
+    this.buyFlag = true;
+    return "buy";
+  } else if (
+    this.buyFlag &&
+    shortEMAValue < LongEMAValue &&
+    shortEMABefore > LongEMABefore &&
+    RSIValue < this.overBought
+  ) {
+    this.buyFlag = false;
+    return "sell";
+  } else {
+    return "";
   }
 };
 TradeCrypto.prototype.calculateSignal = function () {
   console.log(`calculate ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
-  if (
-    !this.onBuy.status &&
-    this.shortEMA[lastIndex] > this.longEMA[lastIndex] &&
-    this.shortEMA[lastIndex - 1] < this.longEMA[lastIndex - 1] &&
-    this.DataRSI.rsi[lastIndex] > 50
+  switch (
+    this.applyStrategy(
+      this.shortEMA[lastIndex],
+      this.shortEMA[lastIndex - 1],
+      this.longEMA[lastIndex],
+      this.longEMA[lastIndex - 1],
+      this.DataRSI.rsi[lastIndex]
+    )
   ) {
-    const buyWith = (10 / 100) * saldo;
-    saldo -= buyWith;
-    this.onBuy = {
-      status: true,
-      getCoin: buyWith / dataClose[lastIndex],
-    };
-    console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
-    bot.telegram.sendMessage(
-      process.env.MY_ID,
-      `INFO: Buy ${this.name} on ${dataClose[lastIndex]}`
-    );
-  } else if (
-    this.onBuy.status &&
-    this.shortEMA[lastIndex] < this.longEMA[lastIndex] &&
-    this.shortEMA[lastIndex - 1] > this.longEMA[lastIndex - 1] &&
-    this.DataRSI.rsi[lastIndex] < 50
-  ) {
-    const sellWith = this.buyWith.getCoin * this.dataClose[lastIndex];
-    saldo += sellWith;
-    this.onBuy = {
-      status: false,
-      getCoin: 0,
-    };
-    console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
-    bot.telegram.sendMessage(
-      process.env.MY_ID,
-      `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
-    );
-  } else {
-    console.log(`INFO ${this.name}: no trade signal`);
-    bot.telegram.sendMessage(
-      process.env.MY_ID,
-      `INFO ${this.name}: no trade signal`
-    );
+    case "buy":
+      const buyWith = (10 / 100) * saldo;
+      saldo -= buyWith;
+      this.dataBuy = {
+        getCoin: buyWith / dataClose[lastIndex],
+      };
+      console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
+      bot.telegram.sendMessage(
+        process.env.MY_ID,
+        `INFO: Buy ${this.name} on ${dataClose[lastIndex]}`
+      );
+      break;
+    case "sell":
+      const sellWith = this.dataBuy.getCoin * this.dataClose[lastIndex];
+      saldo += sellWith;
+      this.dataBuy = {
+        getCoin: 0,
+      };
+      console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
+      bot.telegram.sendMessage(
+        process.env.MY_ID,
+        `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
+      );
+      break;
+    default:
+      console.log(`INFO ${this.name}: no trade signal`);
+      bot.telegram.sendMessage(
+        process.env.MY_ID,
+        `INFO ${this.name}: no trade signal`
+      );
+      break;
   }
+};
+TradeCrypto.prototype.tes = function () {
+  this.dataClose.forEach((v, i) => {
+    if (i > 0) {
+      switch (
+        this.applyStrategy(
+          this.shortEMA[i],
+          this.shortEMA[i - 1],
+          this.longEMA[i],
+          this.longEMA[i - 1],
+          this.DataRSI.rsi[i]
+        )
+      ) {
+        case "buy":
+          console.log(
+            this.shortEMA[i],
+            this.shortEMA[i - 1],
+            this.longEMA[i],
+            this.longEMA[i - 1],
+            this.DataRSI.rsi[i]
+          );
+          console.log(
+            `buy ${this.name} ${moment(this.dataTime[i] * 1000).format(
+              "DD/MM/YY,HH:mm"
+            )}`,
+            v
+          );
+          break;
+        case "sell":
+          console.log(
+            this.shortEMA[i],
+            this.shortEMA[i - 1],
+            this.longEMA[i],
+            this.longEMA[i - 1],
+            this.DataRSI.rsi[i]
+          );
+          console.log(
+            `sell ${this.name} ${moment(this.dataTime[i] * 1000).format(
+              "DD/MM/YY,HH:mm"
+            )}`,
+            v
+          );
+          break;
+        default:
+          console.log("no action");
+          break;
+      }
+    }
+  });
 };
 TradeCrypto.prototype.updateData = async function () {
   console.log(`get update ${this.name}`);

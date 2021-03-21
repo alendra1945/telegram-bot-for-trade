@@ -6,8 +6,17 @@ const bot = require("./src/helper/botTele");
 const { isMe } = require("./src/helper/validation");
 const { currencyFormatter } = require("./src/helper/currencyFormat");
 const moment = require("moment");
-const bitCoin = new TradeCrypto("Bitcoin", "BTCIDR");
-const doge = new TradeCrypto("Doge", "DOGEIDR");
+
+const bitCoin = new TradeCrypto({ name: "Bitcoin", code: "BTCIDR" });
+const doge = new TradeCrypto({
+  name: "Doge",
+  code: "DOGEIDR",
+  numDays: 300,
+  resolution: "15",
+  overSold: 60,
+  overBought: 40,
+});
+
 const cron = require("node-cron");
 const axios = require("axios");
 try {

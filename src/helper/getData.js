@@ -1,6 +1,7 @@
 "use strict";
 const moment = require("moment");
 const axios = require("axios");
+const numDataToCalculate = 1000;
 
 module.exports.getDataFrom = async (
   from,
@@ -36,9 +37,13 @@ module.exports.getDataClose = async (
       throw new Error("data Empty");
     }
     const dataTime =
-      result.t.length > 200 ? result.t.slice(result.t.length - 200) : result.t;
+      result.t.length > numDataToCalculate
+        ? result.t.slice(result.t.length - numDataToCalculate)
+        : result.t;
     const closePrice =
-      result.c.length > 200 ? result.c.slice(result.c.length - 200) : result.c;
+      result.c.length > numDataToCalculate
+        ? result.c.slice(result.c.length - numDataToCalculate)
+        : result.c;
     return {
       status: true,
       dataTime: dataTime,
