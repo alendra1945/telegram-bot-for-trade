@@ -9,6 +9,7 @@ const moment = require("moment");
 const bitCoin = new TradeCrypto("Bitcoin", "BTCIDR");
 const doge = new TradeCrypto("Doge", "DOGEIDR");
 const cron = require("node-cron");
+const axios = require("axios");
 try {
   bitCoin.start();
   doge.start();
@@ -60,9 +61,10 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(process.env.PORT || 3000, () => {
-  cron.schedule("0 */25 * * * *", () => {
-    fetch("https://bot-indodax.herokuapp.com/").then((res) => {
-      console.log(res);
-    });
+  console.log("run bot success");
+});
+cron.schedule("* */5 * * * *", () => {
+  axios.get("https://bot-indodax.herokuapp.com/").then((res) => {
+    console.log("res", res.data);
   });
 });
