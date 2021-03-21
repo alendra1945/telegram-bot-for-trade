@@ -47,7 +47,7 @@ TradeCrypto.prototype.start = async function () {
     this.longEMA = getDataMAByPeriode(data.dataClose, this.periodeLong);
     this.DataRSI = getDataRSI(data.dataClose, this.periodeRSI);
     this.calculateSignal();
-    cron.schedule("35 1 * * * *", this.updateData);
+    cron.schedule("35 0,15,30,45 * * * *", this.updateData);
   }
 };
 TradeCrypto.prototype.calculateSignal = function () {
@@ -116,7 +116,7 @@ TradeCrypto.prototype.updateData = async function () {
       this.longEMA = [
         ...this.longEMA.slice(1),
         calculateEMA(
-          this.periodeShort,
+          this.periodeLong,
           this.dataClose[lastIndex],
           this.longEMA[lastIndex]
         ),

@@ -5,18 +5,44 @@ const TradeCrypto = require("./src/helper/TradeCrypto");
 const bot = require("./src/helper/botTele");
 const { isMe } = require("./src/helper/validation");
 const { currencyFormatter } = require("./src/helper/currencyFormat");
-const bitCoin = new TradeCrypto("BitCoin", "BTCIDR");
 
+const bitCoin = new TradeCrypto("Bitcoin", "BTCIDR");
+const doge = new TradeCrypto("Doge", "DOGEIDR");
 try {
   bitCoin.start();
-  bot.command(
-    "closebitcoin",
+  doge.start();
+  bot.hears(
+    "Close Bitcoin",
     isMe((ctx) => {
       ctx.reply(
         `ClosePrice on ${currencyFormatter.format(
           bitCoin.dataClose[bitCoin.dataClose.length - 1]
         )}`
       );
+    })
+  );
+  bot.hears(
+    "Close Doge",
+    isMe((ctx) => {
+      ctx.reply(
+        `ClosePrice on ${currencyFormatter.format(
+          doge.dataClose[doge.dataClose.length - 1]
+        )}`
+      );
+    })
+  );
+  bot.hears(
+    "Update Bitcoin",
+    isMe((ctx) => {
+      bitCoin.updateData();
+      ctx.reply("Woke");
+    })
+  );
+  bot.hears(
+    "Update Doge",
+    isMe((ctx) => {
+      doge.updateData();
+      ctx.reply("Woke");
     })
   );
   bot.launch();

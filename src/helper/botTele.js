@@ -11,18 +11,23 @@ try {
       ctx.reply("Heloo ");
     })
   );
-  bot.command(
-    "balance",
+  bot.help(
     isMe((ctx) => {
-      ctx.reply(`Your saldo ${currencyFormatter.format(saldo)}`);
+      ctx.reply("Menu", {
+        reply_markup: {
+          keyboard: [
+            ["Balance"],
+            ["Close Bitcoin", "Update Bitcoin"],
+            ["Close Doge", "Update Doge"],
+          ],
+        },
+      });
     })
   );
-
-  bot.command(
-    "updateData",
+  bot.hears(
+    "Balance",
     isMe((ctx) => {
-      updateData();
-      ctx.reply("Woke");
+      ctx.reply(`Your saldo ${currencyFormatter.format(saldo)}`);
     })
   );
 } catch (err) {
