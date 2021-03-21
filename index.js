@@ -7,10 +7,15 @@ const { isMe } = require("./src/helper/validation");
 const { currencyFormatter } = require("./src/helper/currencyFormat");
 const moment = require("moment");
 
-const bitCoin = new TradeCrypto({ name: "Bitcoin", code: "BTCIDR" });
+const bitCoin = new TradeCrypto({
+  name: "Bitcoin",
+  code: "BTCIDR",
+});
 const doge = new TradeCrypto({
   name: "Doge",
   code: "DOGEIDR",
+  periodeShort: 14,
+  periodeLong: 27,
   numDays: 300,
   resolution: "15",
   overSold: 60,

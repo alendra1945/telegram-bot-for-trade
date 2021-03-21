@@ -18,8 +18,8 @@ const {
 function TradeCrypto({
   name,
   code = "BTCIDR",
-  periodeShort = 14,
-  periodeLong = 26,
+  periodeShort = 21,
+  periodeLong = 34,
   periodeRSI = 14,
   numDays = 1000,
   resolution = "60",
@@ -70,10 +70,12 @@ TradeCrypto.prototype.start = async function () {
         name: this.name,
       },
     });
-
-    this.calculateSignal();
-    cron.schedule("35 0,3,15,30,45 * * * *", () => this.updateData());
-    // this.tes();
+    if (!(process.env.RUN_TES && parseInt(process.env.RUN_TES) === 1)) {
+      this.calculateSignal();
+      cron.schedule("35 0,3,15,30,45 * * * *", () => this.updateData());
+    } else {
+      this.tes();
+    }
   }
 };
 TradeCrypto.prototype.applyStrategy = function (
