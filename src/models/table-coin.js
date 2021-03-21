@@ -1,15 +1,15 @@
 "use strict";
 module.exports = (sequelize, DataTypes) => {
-  const CryptoCoin = sequelize.define(
-    "CryptoCoin",
+  const CryptoCoins = sequelize.define(
+    "CryptoCoins",
     {
       name: DataTypes.STRING,
       coin: DataTypes.INTEGER,
     },
     {}
   );
-  CryptoCoin.associate = function (models) {
+  CryptoCoins.associate = function (models) {
     // associations can be defined here
   };
-  return CryptoCoin;
+  return CryptoCoins;
 };

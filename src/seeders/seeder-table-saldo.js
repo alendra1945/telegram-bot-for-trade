@@ -3,7 +3,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert(
-      "Saldo",
+      "Saldos",
       [
         {
           saldoIDR: 150000,
@@ -14,6 +14,6 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.bulkDelete("tRoles", null, {});
+    return queryInterface.bulkDelete("Saldos", null, {});
   },
 };

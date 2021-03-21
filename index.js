@@ -19,7 +19,16 @@ const doge = new TradeCrypto({
 
 const cron = require("node-cron");
 const axios = require("axios");
+const { Saldos: SaldoModel } = require("./src/models");
 try {
+  (async () => {
+    const mysaldo = await SaldoModel.findOne();
+    if (!mysaldo) {
+      await SaldoModel.create({
+        saldoIDR: 15000,
+      });
+    }
+  })();
   bitCoin.start();
   doge.start();
   bot.hears(

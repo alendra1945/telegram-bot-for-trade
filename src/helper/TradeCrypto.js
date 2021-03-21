@@ -10,7 +10,10 @@ const {
   calculateRSI,
 } = require("./getData");
 const moment = require("moment");
-let saldo = 1500000;
+const {
+  Saldos: SaldoModel,
+  CryptoCoins: CryptoCoinModel,
+} = require("../models");
 
 function TradeCrypto({
   name,
@@ -42,8 +45,17 @@ function TradeCrypto({
     status: false,
     getCoin: 0,
   };
+  this.dataSaldo;
+  this.dataCoin;
 }
 TradeCrypto.prototype.start = async function () {
+  const mycoin = await CryptoCoinModel.findOne({ where: { name: this.name } });
+  if (!mycoin) {
+    await CryptoCoinModel.create({
+      name: this.name,
+      coin: 0,
+    });
+  }
   const data = await getDataClose(this.numDays, this.code, this.resolution);
   if (data.status) {
     this.dataTime = data.dataTime;
@@ -51,6 +63,14 @@ TradeCrypto.prototype.start = async function () {
     this.shortEMA = getDataMAByPeriode(data.dataClose, this.periodeShort);
     this.longEMA = getDataMAByPeriode(data.dataClose, this.periodeLong);
     this.DataRSI = getDataRSI(data.dataClose, this.periodeRSI);
+
+    this.dataSaldo = await SaldoModel.findOne();
+    this.dataCoin = await CryptoCoinModel.findOne({
+      where: {
+        name: this.name,
+      },
+    });
+
     this.calculateSignal();
     cron.schedule("35 0,3,15,30,45 * * * *", () => this.updateData());
     // this.tes();
@@ -83,49 +103,57 @@ TradeCrypto.prototype.applyStrategy = function (
     return "";
   }
 };
-TradeCrypto.prototype.calculateSignal = function () {
+TradeCrypto.prototype.calculateSignal = async function () {
   console.log(`calculate ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
-  switch (
-    this.applyStrategy(
-      this.shortEMA[lastIndex],
-      this.shortEMA[lastIndex - 1],
-      this.longEMA[lastIndex],
-      this.longEMA[lastIndex - 1],
-      this.DataRSI.rsi[lastIndex]
-    )
-  ) {
-    case "buy":
-      const buyWith = (10 / 100) * saldo;
-      saldo -= buyWith;
-      this.dataBuy = {
-        getCoin: buyWith / dataClose[lastIndex],
-      };
-      console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
-      bot.telegram.sendMessage(
-        process.env.MY_ID,
-        `INFO: Buy ${this.name} on ${dataClose[lastIndex]}`
-      );
-      break;
-    case "sell":
-      const sellWith = this.dataBuy.getCoin * this.dataClose[lastIndex];
-      saldo += sellWith;
-      this.dataBuy = {
-        getCoin: 0,
-      };
-      console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
-      bot.telegram.sendMessage(
-        process.env.MY_ID,
-        `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
-      );
-      break;
-    default:
-      console.log(`INFO ${this.name}: no trade signal`);
-      bot.telegram.sendMessage(
-        process.env.MY_ID,
-        `INFO ${this.name}: no trade signal`
-      );
-      break;
+  if (this.dataSaldo) {
+    const mysaldo = this.dataSaldo.get("saldoIDR");
+    switch (
+      this.applyStrategy(
+        this.shortEMA[lastIndex],
+        this.shortEMA[lastIndex - 1],
+        this.longEMA[lastIndex],
+        this.longEMA[lastIndex - 1],
+        this.DataRSI.rsi[lastIndex]
+      )
+    ) {
+      case "buy":
+        const buyWith = (10 / 100) * mysaldo;
+        await this.dataSaldo.update({
+          saldoIDR: mysaldo - buyWith,
+        });
+        await this.dataCoin.update({
+          coin: buyWith / dataClose[lastIndex],
+        });
+        console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
+        bot.telegram.sendMessage(
+          process.env.MY_ID,
+          `INFO: Buy ${this.name} on ${dataClose[lastIndex]}`
+        );
+        break;
+      case "sell":
+        const myCoin = this.dataCoin.get("coin");
+        const sellWith = myCoin * this.dataClose[lastIndex];
+        await this.dataSaldo.update({
+          saldoIDR: mysaldo + sellWith,
+        });
+        await this.dataCoin.update({
+          coin: buyWith / dataClose[lastIndex],
+        });
+        console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
+        bot.telegram.sendMessage(
+          process.env.MY_ID,
+          `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
+        );
+        break;
+      default:
+        console.log(`INFO ${this.name}: no trade signal`);
+        bot.telegram.sendMessage(
+          process.env.MY_ID,
+          `INFO ${this.name}: no trade signal`
+        );
+        break;
+    }
   }
 };
 TradeCrypto.prototype.tes = function () {

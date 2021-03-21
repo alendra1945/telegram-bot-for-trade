@@ -2,9 +2,8 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const { currencyFormatter } = require("./currencyFormat");
 const { isMe } = require("./validation");
-saldo = 1500000;
 const bot = new Telegraf(process.env.TELEGRAM_BOT_KEY);
-
+const { Saldos: SaldoModel } = require("../models");
 try {
   bot.start(
     isMe((ctx) => {
@@ -26,8 +25,13 @@ try {
   );
   bot.hears(
     "Balance",
-    isMe((ctx) => {
-      ctx.reply(`Your saldo ${currencyFormatter.format(saldo)}`);
+    isMe(async (ctx) => {
+      const dataSaldo = await SaldoModel.findOne();
+      if (dataSaldo) {
+        ctx.reply(
+          `Your saldo ${currencyFormatter.format(dataSaldo.get("saldoIDR"))}`
+        );
+      }
     })
   );
 } catch (err) {

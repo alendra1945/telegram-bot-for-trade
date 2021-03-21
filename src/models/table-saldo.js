@@ -1,14 +1,14 @@
 "use strict";
 module.exports = (sequelize, DataTypes) => {
-  const Saldo = sequelize.define(
-    "Saldo",
+  const Saldos = sequelize.define(
+    "Saldos",
     {
       saldoIDR: DataTypes.INTEGER,
     },
     {}
   );
-  Saldo.associate = function (models) {
+  Saldos.associate = function (models) {
     // associations can be defined here
   };
-  return Saldo;
+  return Saldos;
 };
