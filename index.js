@@ -8,6 +8,7 @@ const { currencyFormatter } = require("./src/helper/currencyFormat");
 const moment = require("moment");
 const bitCoin = new TradeCrypto("Bitcoin", "BTCIDR");
 const doge = new TradeCrypto("Doge", "DOGEIDR");
+const cron = require("node-cron");
 try {
   bitCoin.start();
   doge.start();
@@ -58,4 +59,10 @@ const server = http.createServer((req, res) => {
   res.end("bot work");
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 3000, () => {
+  cron.schedule("0 */25 * * * *", () => {
+    fetch("https://bot-indodax.herokuapp.com/").then((res) => {
+      console.log(res);
+    });
+  });
+});
