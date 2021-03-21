@@ -5,7 +5,7 @@ const TradeCrypto = require("./src/helper/TradeCrypto");
 const bot = require("./src/helper/botTele");
 const { isMe } = require("./src/helper/validation");
 const { currencyFormatter } = require("./src/helper/currencyFormat");
-
+const moment = require("moment");
 const bitCoin = new TradeCrypto("Bitcoin", "BTCIDR");
 const doge = new TradeCrypto("Doge", "DOGEIDR");
 try {
@@ -15,7 +15,9 @@ try {
     "Close Bitcoin",
     isMe((ctx) => {
       ctx.reply(
-        `ClosePrice on ${currencyFormatter.format(
+        `${moment(bitCoin.dataTime[bitCoin.dataTime.length - 1] * 1000).format(
+          "DD/MM/YY,HH:mm"
+        )} ClosePrice on ${currencyFormatter.format(
           bitCoin.dataClose[bitCoin.dataClose.length - 1]
         )}`
       );
@@ -25,7 +27,9 @@ try {
     "Close Doge",
     isMe((ctx) => {
       ctx.reply(
-        `ClosePrice on ${currencyFormatter.format(
+        `${moment(doge.dataTime[doge.dataTime.length - 1] * 1000).format(
+          "DD/MM/YY,HH:mm"
+        )} ClosePrice on ${currencyFormatter.format(
           doge.dataClose[doge.dataClose.length - 1]
         )}`
       );
