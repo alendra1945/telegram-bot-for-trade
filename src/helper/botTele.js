@@ -1,6 +1,7 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 
+saldo = 1500000;
 const bot = new Telegraf(process.env.TELEGRAM_BOT_KEY);
 
 const isMe = (callback) => (ctx) => {
@@ -31,7 +32,6 @@ bot.command(
   "updateData",
   isMe((ctx) => {
     updateData();
-    console.log(ctx.message);
     ctx.reply("Woke");
   })
 );
