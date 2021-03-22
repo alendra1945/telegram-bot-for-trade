@@ -154,12 +154,14 @@ TradeCrypto.prototype.calculateSignal = async function () {
           `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
         );
         break;
-      default:
+      case "":
         console.log(`INFO ${this.name}: no trade signal`);
         bot.telegram.sendMessage(
           process.env.MY_ID,
           `INFO ${this.name}: no trade signal`
         );
+        break;
+      default:
         break;
     }
   }
