@@ -114,6 +114,13 @@ TradeCrypto.prototype.calculateSignal = async function () {
   const lastIndex = this.dataClose.length - 1;
   if (this.dataSaldo) {
     const mysaldo = this.dataSaldo.get("saldoIDR");
+    console.log(
+      this.shortEMA[lastIndex],
+      this.shortEMA[lastIndex - 1],
+      this.longEMA[lastIndex],
+      this.longEMA[lastIndex - 1],
+      this.DataRSI.rsi[lastIndex]
+    );
     switch (
       this.applyStrategy(
         this.shortEMA[lastIndex],
