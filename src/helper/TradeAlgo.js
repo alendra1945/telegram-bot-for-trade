@@ -15,7 +15,7 @@ const {
   CryptoCoins: CryptoCoinModel,
 } = require("../models");
 
-function TradeCrypto({
+function TradeAlgo({
   name,
   code = "BTCIDR",
   periodeShort = 21,
@@ -25,9 +25,11 @@ function TradeCrypto({
   resolution = "60",
   overSold = 58,
   overBought = 50,
+  domain = "indodax",
 }) {
   this.name = name;
   this.code = code || "BTCIDR";
+  this.domain = domain;
   this.periodeShort = periodeShort || 14;
   this.periodeLong = periodeLong || 26;
   this.periodeRSI = periodeRSI || 14;
@@ -47,7 +49,7 @@ function TradeCrypto({
   this.dataSaldo;
   this.dataCoin;
 }
-TradeCrypto.prototype.start = async function () {
+TradeAlgo.prototype.start = async function () {
   const mycoin = await CryptoCoinModel.findOne({ where: { name: this.name } });
   if (!mycoin) {
     await CryptoCoinModel.create({
@@ -55,7 +57,12 @@ TradeCrypto.prototype.start = async function () {
       coin: 0,
     });
   }
-  const data = await getDataClose(this.numDays, this.code, this.resolution);
+  const data = await getDataClose(
+    this.numDays,
+    this.code,
+    this.resolution,
+    this.domain
+  );
   if (data.status) {
     this.dataTime = data.dataTime;
     this.dataClose = data.dataClose;
@@ -77,7 +84,7 @@ TradeCrypto.prototype.start = async function () {
     }
   }
 };
-TradeCrypto.prototype.applyStrategy = function (
+TradeAlgo.prototype.applyStrategy = function (
   shortEMAValue,
   shortEMABefore,
   LongEMAValue,
@@ -109,7 +116,7 @@ TradeCrypto.prototype.applyStrategy = function (
     return "";
   }
 };
-TradeCrypto.prototype.calculateSignal = async function () {
+TradeAlgo.prototype.calculateSignal = async function () {
   console.log(`calculate ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
   if (this.dataSaldo) {
@@ -173,7 +180,9 @@ TradeCrypto.prototype.calculateSignal = async function () {
     }
   }
 };
-TradeCrypto.prototype.tes = async function () {
+TradeAlgo.prototype.tes = async function () {
+  let saldo = 10000000;
+  let coin = 0;
   this.dataClose.forEach((v, i) => {
     if (i > 0) {
       switch (
@@ -186,6 +195,15 @@ TradeCrypto.prototype.tes = async function () {
         )
       ) {
         case "buy":
+          if (this.domain == "investing") {
+            saldo -= 1000 * v;
+          } else if (this.domain == "indodax") {
+            const buywith = (90 / 100) * saldo;
+            console.log("sisa", saldo - buywith);
+            console.log("get", buywith / v);
+            saldo -= buywith;
+            coin = buywith / v;
+          }
           console.log(
             this.shortEMA[i],
             this.shortEMA[i - 1],
@@ -201,6 +219,14 @@ TradeCrypto.prototype.tes = async function () {
           );
           break;
         case "sell":
+          if (this.domain == "investing") {
+            saldo += 1000 * v;
+          } else if (this.domain == "indodax") {
+            console.log("get", coin * v);
+            saldo += coin * v;
+            console.log("saldo now", saldo);
+            coin = 0;
+          }
           console.log(
             this.shortEMA[i],
             this.shortEMA[i - 1],
@@ -220,19 +246,21 @@ TradeCrypto.prototype.tes = async function () {
       }
     }
   });
+  console.log("saldo akhir ", saldo);
   await this.dataCoin.update({
     coin: 0,
     buyFlag: 0,
   });
 };
-TradeCrypto.prototype.updateData = async function () {
+TradeAlgo.prototype.updateData = async function () {
   console.log(`get update ${this.name}`);
   const lastIndex = this.dataClose.length - 1;
   try {
     const newData = await getDataFrom(
       this.dataTime[lastIndex],
       this.code,
-      this.resolution
+      this.resolution,
+      this.domain
     );
     if (newData.data && newData.data.s === "ok" && newData.data.t.length > 1) {
       this.dataTime = [...this.dataTime.slice(1), ...newData.data.t.slice(1)];
@@ -271,4 +299,4 @@ TradeCrypto.prototype.updateData = async function () {
   }
 };
 
-module.exports = TradeCrypto;
+module.exports = TradeAlgo;

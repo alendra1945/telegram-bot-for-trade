@@ -3,15 +3,29 @@ const moment = require("moment");
 const axios = require("axios");
 const numDataToCalculate = 1000;
 
+const generateLink = (from, code, resolution, domain) => {
+  const to = Math.floor(moment().toDate().getTime() / 1000);
+  switch (domain) {
+    case "indodax":
+      return `https://indodax.com/tradingview/history?symbol=${code}&resolution=${resolution}&from=${from}`;
+    case "investing":
+      return `https://tvc4.forexpros.com/085433a630d3fa11c1417362edfa0015/1616419666/1/1/8/history?symbol=${code}&resolution=${resolution}&from=${from}&to=${to}`;
+    default:
+      return false;
+  }
+};
 module.exports.getDataFrom = async (
   from,
   code = "BTCIDR",
-  resolution = "60"
+  resolution = "60",
+  domain = "indodax"
 ) => {
   try {
-    const getData = await axios.get(
-      `https://indodax.com/tradingview/history?symbol=${code}&resolution=${resolution}&from=${from}`
-    );
+    const link = generateLink(from, code, resolution, domain);
+    if (!link) {
+      throw new Error("not valid url");
+    }
+    const getData = await axios.get(link);
     if (!getData.data) {
       throw new Error("error when get data");
     }
@@ -23,12 +37,13 @@ module.exports.getDataFrom = async (
 module.exports.getDataClose = async (
   numDays = 100,
   code = "BTCIDR",
-  resolution = "60"
+  resolution = "60",
+  domain = "indodax"
 ) => {
   const startFrom =
     moment().startOf("day").toDate().getTime() / 1000 - numDays * 24 * 60 * 60;
   try {
-    const getData = await this.getDataFrom(startFrom, code, resolution);
+    const getData = await this.getDataFrom(startFrom, code, resolution, domain);
     if (!getData.data) {
       throw new Error("error when get data");
     }

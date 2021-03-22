@@ -1,17 +1,18 @@
 "use strict";
 require("dotenv").config();
 const http = require("http");
-const TradeCrypto = require("./src/helper/TradeCrypto");
+const TradeAlgo = require("./src/helper/TradeAlgo");
 const bot = require("./src/helper/botTele");
 const { isMe } = require("./src/helper/validation");
 const { currencyFormatter } = require("./src/helper/currencyFormat");
 const moment = require("moment");
 
-const bitCoin = new TradeCrypto({
+const bitCoin = new TradeAlgo({
   name: "Bitcoin",
   code: "BTCIDR",
+  domain: "indodax",
 });
-const doge = new TradeCrypto({
+const doge = new TradeAlgo({
   name: "Doge",
   code: "DOGEIDR",
   periodeShort: 14,
@@ -20,8 +21,18 @@ const doge = new TradeCrypto({
   resolution: "15",
   overSold: 60,
   overBought: 40,
+  domain: "indodax",
 });
-
+// const BRI = new TradeAlgo({
+//   name: "BRI",
+//   code: "101336",
+//   domain: "investing",
+// });
+// const Telkom = new TradeAlgo({
+//   name: "Telkom",
+//   code: "101600",
+//   domain: "investing",
+// });
 const cron = require("node-cron");
 const axios = require("axios");
 const { Saldos: SaldoModel } = require("./src/models");
