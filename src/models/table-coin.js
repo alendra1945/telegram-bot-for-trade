@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       name: DataTypes.STRING,
       coin: DataTypes.INTEGER,
+      buyFlag: DataTypes.TINYINT,
     },
     {}
   );

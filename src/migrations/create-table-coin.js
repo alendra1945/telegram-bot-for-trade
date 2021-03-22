@@ -16,6 +16,10 @@ module.exports = {
         type: Sequelize.INTEGER(11),
         allowNull: false,
       },
+      buyFlag: {
+        type: Sequelize.TINYINT,
+        defaultValue: 0,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

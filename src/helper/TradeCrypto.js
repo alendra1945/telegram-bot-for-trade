@@ -40,7 +40,6 @@ function TradeCrypto({
   this.shortEMA = [];
   this.longEMA = [];
   this.DataRSI = {};
-  this.buyFlag = false;
   this.dataBuy = {
     status: false,
     getCoin: 0,
@@ -85,21 +84,26 @@ TradeCrypto.prototype.applyStrategy = function (
   LongEMABefore,
   RSIValue
 ) {
+  const buyFlag = this.dataCoin.get("buyFlag");
   if (
-    !this.buyFlag &&
+    !buyFlag &&
     shortEMAValue > LongEMAValue &&
     shortEMABefore < LongEMABefore &&
     RSIValue > this.overSold
   ) {
-    this.buyFlag = true;
+    this.dataCoin.update({
+      buyFlag: 1,
+    });
     return "buy";
   } else if (
-    this.buyFlag &&
+    buyFlag &&
     shortEMAValue < LongEMAValue &&
     shortEMABefore > LongEMABefore &&
     RSIValue < this.overBought
   ) {
-    this.buyFlag = false;
+    this.dataCoin.update({
+      buyFlag: 0,
+    });
     return "sell";
   } else {
     return "";
@@ -126,6 +130,7 @@ TradeCrypto.prototype.calculateSignal = async function () {
         });
         await this.dataCoin.update({
           coin: buyWith / dataClose[lastIndex],
+          buyFlag: 1,
         });
         console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
         bot.telegram.sendMessage(
@@ -140,7 +145,8 @@ TradeCrypto.prototype.calculateSignal = async function () {
           saldoIDR: mysaldo + sellWith,
         });
         await this.dataCoin.update({
-          coin: buyWith / dataClose[lastIndex],
+          coin: 0,
+          buyFlag: 0,
         });
         console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
         bot.telegram.sendMessage(
@@ -158,7 +164,7 @@ TradeCrypto.prototype.calculateSignal = async function () {
     }
   }
 };
-TradeCrypto.prototype.tes = function () {
+TradeCrypto.prototype.tes = async function () {
   this.dataClose.forEach((v, i) => {
     if (i > 0) {
       switch (
@@ -201,10 +207,13 @@ TradeCrypto.prototype.tes = function () {
           );
           break;
         default:
-          console.log("no action");
           break;
       }
     }
+  });
+  await this.dataCoin.update({
+    coin: 0,
+    buyFlag: 0,
   });
 };
 TradeCrypto.prototype.updateData = async function () {
