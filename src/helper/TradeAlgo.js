@@ -143,13 +143,13 @@ TradeAlgo.prototype.calculateSignal = async function () {
           saldoIDR: mysaldo - buyWith,
         });
         await this.dataCoin.update({
-          coin: buyWith / dataClose[lastIndex],
+          coin: buyWith / this.dataClose[lastIndex],
           buyFlag: 1,
         });
-        console.log(`Buy ${this.name} on ${dataClose[lastIndex]}`);
+        console.log(`Buy ${this.name} on ${this.dataClose[lastIndex]}`);
         bot.telegram.sendMessage(
           process.env.MY_ID,
-          `INFO: Buy ${this.name} on ${dataClose[lastIndex]}`
+          `INFO: Buy ${this.name} on ${this.dataClose[lastIndex]}`
         );
         break;
       case "sell":
@@ -162,10 +162,10 @@ TradeAlgo.prototype.calculateSignal = async function () {
           coin: 0,
           buyFlag: 0,
         });
-        console.log(`Sell ${this.name} on ${dataClose[lastIndex]}`);
+        console.log(`Sell ${this.name} on ${this.dataClose[lastIndex]}`);
         bot.telegram.sendMessage(
           process.env.MY_ID,
-          `INFO: Sell ${this.name} on ${dataClose[lastIndex]}`
+          `INFO: Sell ${this.name} on ${this.dataClose[lastIndex]}`
         );
         break;
       case "":
