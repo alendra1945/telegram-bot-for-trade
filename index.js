@@ -1,6 +1,5 @@
 "use strict";
 require("dotenv").config();
-const http = require("http");
 const TradeAlgo = require("./src/helper/TradeAlgo");
 const bot = require("./src/helper/botTele");
 const { isMe } = require("./src/helper/validation");
@@ -33,8 +32,6 @@ const doge = new TradeAlgo({
 //   code: "101600",
 //   domain: "investing",
 // });
-const cron = require("node-cron");
-const axios = require("axios");
 const { Saldos: SaldoModel } = require("./src/models");
 try {
   (async () => {
@@ -89,16 +86,3 @@ try {
 } catch (error) {
   console.log(error);
 }
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.end("bot work");
-});
-
-server.listen(process.env.PORT || 3000, () => {
-  console.log("run bot success");
-});
-cron.schedule("0 */5 * * * *", () => {
-  axios.get("https://bot-indodax.herokuapp.com/").then((res) => {
-    console.log("res", res.data);
-  });
-});
